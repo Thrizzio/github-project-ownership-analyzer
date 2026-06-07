@@ -2,17 +2,18 @@ import fs from "fs";
 import path from "path";
 
 export function getReadme(repoPath) {
-  const readmePath = path.join(
-    repoPath,
-    "README.md"
+  const files = fs.readdirSync(repoPath);
+
+  const readmeFile = files.find(
+    file => file.toLowerCase().startsWith("readme")
   );
 
-  if (!fs.existsSync(readmePath)) {
+  if (!readmeFile) {
     return "";
   }
 
   return fs.readFileSync(
-    readmePath,
+    path.join(repoPath, readmeFile),
     "utf8"
   );
 }

@@ -1,12 +1,19 @@
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
 import { cloneRepo } from "./services/cloneRepo.js";
 import {buildTree} from "./services/buildTree.js";
 import {getReadme,getPackageJson} from "./services/impFiles.js";
 import {treeToString} from "./services/treeToString.js";
 import {buildMetadata} from "./services/buildMetadata.js";
+import { getImportantFiles } from "./services/getImportantFiles.js";
 
 const app = express();
+
+dotenv.config();
+
+console.log("API KEY EXISTS:", !!process.env.GEMINI_API_KEY);
+console.log("API KEY PREFIX:", process.env.GEMINI_API_KEY?.slice(0, 5));
 
 app.use(cors());
 app.use(express.json());
@@ -64,27 +71,45 @@ console.log("Cloning:", repoUrl);
     const treeString = treeToString(tree);
 
     const metadata = {
-      readme,
-      packageJson,
-      tree
+      readme:readme.slice(0,4000),
+      dependencies,
+      devDependencies,
+      fileTree: treeString
     };
 
     console.log("5 metadata built");
 
-      res.json({
-      success: true,
+    console.log("Calling Gemini");
 
-      metadata: {
-        dependencies,
-        devDependencies,
+    
 
-        readmePreview:
-          readme.slice(0, 1000),
+    //   res.json({
+    //   success: true,
 
-        treePreview:
-          treeString.slice(0, 2000)
-      }
+    //   metadata: {
+    //     dependencies,
+    //     devDependencies,
+
+    //     readmePreview:
+    //       readme.slice(0, 1000),
+
+    //     treePreview:
+    //       treeString.slice(0, 2000)
+    //   }
+    // });
+
+  const importantFiles = await getImportantFiles(metadata);
+
+  console.log("Gemini response received");
+
+  console.log(importantFiles);
+
+
+    res.json({
+    success: true,
+    importantFiles
     });
+
     console.log("6 response sent");
 
   } catch (err) {
